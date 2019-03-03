@@ -59,8 +59,6 @@ style vscrollbar:
     xsize gui.scrollbar_size
     base_bar Frame("gui/scrollbar/vertical_[prefix_]bar.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
     thumb Frame("gui/scrollbar/vertical_[prefix_]thumb.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
-    unscrollable "hide"
-    ## Prevents Ren'Py from showing a scrollbar when there's nothing to scroll
 
 style slider:
     ysize gui.slider_size
@@ -247,10 +245,12 @@ screen quick_menu():
     ## Ensure this appears on top of other screens.
     zorder 100
 
-    if quick_menu:
+    if show_quick_menu:
+
+        # Add an in-game quick menu.
 
         hbox:
-            style_prefix "quick"
+            style_group "quick"
 
             xalign 0.5
             yalign 1.0
@@ -260,14 +260,14 @@ screen quick_menu():
             textbutton _("Skip") action Skip() alternate Skip(fast=True, confirm=True)
             textbutton _("Auto") action Preference("auto-forward", "toggle")
             textbutton _("Save") action ShowMenu('save')
-            textbutton _("Q.Save") action QuickSave()
-            textbutton _("Q.Load") action QuickLoad()
+            # textbutton _("Q.Save") action QuickSave()
+            # textbutton _("Q.Load") action QuickLoad()
             textbutton _("Prefs") action ShowMenu('preferences')
-
 
 ## This code ensures that the quick_menu screen is displayed in-game, whenever
 ## the player has not explicitly hidden the interface.
 init python:
+
     config.overlay_screens.append("quick_menu")
 
 default quick_menu = True
@@ -281,6 +281,8 @@ style quick_button:
 style quick_button_text:
     properties gui.button_text_properties("quick_button")
 
+## This allows you to hide the quickmenu during certain scenes if desired.
+default show_quick_menu = True
 
 ################################################################################
 ## Main and Game Menu Screens
@@ -307,7 +309,7 @@ screen navigation():
 
         else:
 
-            textbutton _("History") action ShowMenu("history")
+            # textbutton _("History") action ShowMenu("history")
 
             textbutton _("Save") action ShowMenu("save")
 
@@ -315,15 +317,15 @@ screen navigation():
 
         textbutton _("Preferences") action ShowMenu("preferences")
 
-        if _in_replay:
+        # if _in_replay:
 
-            textbutton _("End Replay") action EndReplay(confirm=True)
-
-        elif not main_menu:
-
-            textbutton _("Main Menu") action MainMenu()
+        #     textbutton _("End Replay") action EndReplay(confirm=True)
 
         textbutton _("About") action ShowMenu("about")
+
+        if persistent.extras_unlocked:
+
+            textbutton _("Extras") action ShowMenu("sprite_gallery")
 
         if renpy.variant("pc"):
 
@@ -444,6 +446,7 @@ screen game_menu(title, scroll=None, yinitial=0.0):
                         scrollbars "vertical"
                         mousewheel True
                         draggable True
+                        pagekeys True
 
                         side_yfill True
 
@@ -459,6 +462,7 @@ screen game_menu(title, scroll=None, yinitial=0.0):
                         scrollbars "vertical"
                         mousewheel True
                         draggable True
+                        pagekeys True
 
                         side_yfill True
 
@@ -659,20 +663,43 @@ screen file_slots(title):
 
                 spacing gui.page_spacing
 
-                textbutton _("<") action FilePagePrevious()
+                textbutton _("<") action FilePagePrevious(max(page-1,1))
 
-                if config.has_autosave:
-                    textbutton _("{#auto_page}A") action FilePage("auto")
+                # if config.has_autosave:
+                #     textbutton _("{#auto_page}A") action FilePage("auto")
 
-                if config.has_quicksave:
-                    textbutton _("{#quick_page}Q") action FilePage("quick")
+                # if config.has_quicksave:
+                #     textbutton _("{#quick_page}Q") action FilePage("quick")
 
                 ## range(1, 10) gives the numbers from 1 to 9.
-                for page in range(1, 10):
+                for page in range(1, 9):
                     textbutton "[page]" action FilePage(page)
 
-                textbutton _(">") action FilePageNext()
+                textbutton _(">") action FilePageNext(min(page+1,8))
+            
+            ## This version allows access to more pages than are listed as buttons
+            ## as there is no hard limit defined.
+            # hbox:
+            #     style_prefix "page"
 
+            #     xalign 0.5
+            #     yalign 1.0
+
+            #     spacing gui.page_spacing
+
+            #     textbutton _("<") action FilePagePrevious()
+
+            #     if config.has_autosave:
+            #         textbutton _("{#auto_page}A") action FilePage("auto")
+
+            #     if config.has_quicksave:
+            #         textbutton _("{#quick_page}Q") action FilePage("quick")
+
+            #     ## range(1, 10) gives the numbers from 1 to 9.
+            #     for page in range(1, 10):
+            #         textbutton "[page]" action FilePage(page)
+
+            #     textbutton _(">") action FilePageNext()
 
 style page_label is gui_label
 style page_label_text is gui_label_text
@@ -941,6 +968,41 @@ screen history():
 
         textbutton _("Return") action Return() yalign 1.1 xalign 1.0
 
+## The old version of the History screen that's attached to the game menu.
+# screen history():
+
+#     tag menu
+
+#     ## Avoid predicting this screen, as it can be very large.
+#     predict False
+
+#     use game_menu(_("History"), scroll=("vpgrid" if gui.history_height else "viewport"), yinitial=1.0):
+
+#         style_prefix "history"
+
+#         for h in _history_list:
+
+#             window:
+
+#                 ## This lays things out properly if history_height is None.
+#                 has fixed:
+#                     yfit True
+
+#                 if h.who:
+
+#                     label h.who:
+#                         style "history_name"
+
+#                         ## Take the color of the who text from the Character, if
+#                         ## set.
+#                         if "color" in h.who_args:
+#                             text_color h.who_args["color"]
+
+#                 $ what = renpy.filter_text_tags(h.what, allow=gui.history_allow_tags)
+#                 text what
+
+#         if not _history_list:
+#             label _("The dialogue history is empty.")
 
 ## This determines what tags are allowed to be displayed on the history screen.
 
@@ -988,6 +1050,7 @@ style history_label_text:
     xalign 0.5
     ypos -100
     size gui.label_text_size
+
 
 ## Help screen #################################################################
 ##
@@ -1428,6 +1491,316 @@ style nvl_button:
 style nvl_button_text:
     properties gui.button_text_properties("nvl_button")
 
+
+## Extras screens #################################################################
+##
+## A screen that includes Image Galleries, Music Room, Replay Room, and Developer
+## Notes.
+## https://www.renpy.org/doc/html/rooms.html
+
+## We let Ren'Py resize our images so we don't have to make buttons in another
+## program.
+
+# These background buttons are 480x270
+image room_button = im.FactorScale("bg/room.jpg", 0.25)
+image office_button = im.FactorScale("bg/future_office.jpg", 0.25)
+image beach_button = im.FactorScale("bg/sort_of_beautiful_beach_day.jpg", 0.25)
+image bglock_button = "gui/button/bg_locked.jpg"
+
+# These sprite buttons are 290x290
+image ehappy_button = Crop((170, 245, 290, 290), "eileen happy")
+image eneutral_button = Crop((170, 245, 290, 290), "eileen neutral")
+image esurprised_button = Crop((170, 245, 290, 290), "eileen surprised")
+image eupset_button = Crop((170, 245, 290, 290), "eileen upset")
+image eangry_button = Crop((170, 245, 290, 290), "eileen angry")
+image spritelock_button = "gui/button/sprite_locked.jpg"
+
+init python:
+
+    g_bg = Gallery()
+
+    # Backgrounds for the BG Gallery
+    g_bg.button("room")
+    g_bg.unlock_image("room") 
+
+    g_bg.button("office")
+    g_bg.image("future_office")
+    g_bg.unlock("future_office")
+
+    g_bg.button("beach")
+    g_bg.image("sort_of_beautiful_beach_day")
+    g_bg.unlock("sort_of_beautiful_beach_day")
+
+    # Sprites for the Sprite Gallery
+    # We put a background in the first spot so Eileen isn't floating in a void.
+
+    g_sprite = Gallery()
+
+    g_sprite.button("eileen happy")
+    g_sprite.unlock_image("room", "eileen happy")
+
+    g_sprite.button("eileen neutral")
+    g_sprite.unlock_image("room", "eileen neutral")
+
+    g_sprite.button("eileen surprised")
+    g_sprite.unlock_image("room", "eileen surprised")
+
+    g_sprite.button("eileen upset")
+    g_sprite.image("room", "eileen upset")
+    g_sprite.unlock("room", "eileen upset")
+
+    g_sprite.button("eileen angry")
+    g_sprite.image("room", "eileen angry")
+    g_sprite.unlock("room", "eileen angry")
+
+    # The button used for locked images
+    g_bg.locked_button = "bglock_button"
+    g_sprite.locked_button = "spritelock_button"
+
+    # The transition used when switching images.
+    g_bg.transition = dissolve
+    g_sprite.transition = dissolve
+
+    # MusicRoom instance.
+    mr = MusicRoom(fadeout=1.0)
+
+    # Add music files.
+    mr.add("audio/Careless-Summer_Looping.mp3", always_unlocked=True)
+    mr.add("audio/Future-Business_v001.mp3")
+    mr.add("audio/Sculpture-Garden_Looping.mp3")
+    mr.add("audio/The-Concrete-Bakes_Looping.mp3")
+
+## Extras Navigation screen ############################################################
+##
+## This is the same as the Game Menu Navigation screen, but just for the Extras.
+
+screen extras_navigation():
+
+    vbox:
+        style_prefix "navigation"
+
+        xpos gui.navigation_xpos
+        yalign 0.5
+
+        spacing gui.navigation_spacing
+
+
+        textbutton _("Sprite Gallery") action ShowMenu("sprite_gallery")
+
+        textbutton _("Background Gallery") action ShowMenu("bg_gallery")
+
+        textbutton _("Music Room") action ShowMenu("music_gallery")
+
+        textbutton _("Replay Room") action ShowMenu("replay_gallery")
+
+        if persistent.game_clear:
+
+            textbutton _("Developer Notes") action ShowMenu("dev_notes")
+
+        textbutton _("Return") action Return()
+
+## Extras Menu screen ############################################################
+##
+## This is the same as the Game Menu screen, but just for the Extras.
+
+screen extras_menu(title, scroll=None, yinitial=0.0):
+
+    style_prefix "game_menu"
+
+    if main_menu:
+        add gui.main_menu_background
+    else:
+        add gui.game_menu_background
+
+    frame:
+        style "game_menu_outer_frame"
+
+        hbox:
+
+            ## Reserve space for the navigation section.
+            frame:
+                style "game_menu_navigation_frame"
+
+            frame:
+                style "game_menu_content_frame"
+
+                if scroll == "viewport":
+
+                    viewport:
+                        yinitial yinitial
+                        scrollbars "vertical"
+                        mousewheel True
+                        draggable True
+                        pagekeys True
+
+                        side_yfill True
+
+                        vbox:
+                            transclude
+
+                elif scroll == "vpgrid":
+
+                    vpgrid:
+                        cols 1
+                        yinitial yinitial
+
+                        scrollbars "vertical"
+                        mousewheel True
+                        draggable True
+                        pagekeys True
+
+                        side_yfill True
+
+                        transclude
+
+                else:
+
+                    transclude
+
+    use extras_navigation
+
+## Sprite Gallery screen ############################################################
+##
+## This is a simple screen that shows buttons that display a sprite imposed on a
+## background.
+
+screen sprite_gallery():
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one.
+    use extras_menu("Sprite Gallery"):
+
+        grid 5 1:
+
+            xfill True
+            yfill True
+
+            # Call make_button to show a particular button.
+            add g_sprite.make_button("eileen happy", "ehappy_button")
+            add g_sprite.make_button("eileen neutral", "eneutral_button")
+            add g_sprite.make_button("eileen surprised", "esurprised_button")
+            add g_sprite.make_button("eileen upset", "eupset_button")
+            add g_sprite.make_button("eileen angry", "eangry_button")
+
+## Background Gallery screen ############################################################
+##
+## This is a simple screen that shows buttons that display a background.
+
+screen bg_gallery():
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one.
+    use extras_menu("Background Gallery"):
+
+        grid 1 3:
+
+            xfill True
+            yfill True
+
+            # Call make_button to show a particular button.
+            add g_bg.make_button("room", "room_button", xalign=0.5, yalign=0.5)
+            add g_bg.make_button("office", "office_button", xalign=0.5, yalign=0.5)
+            add g_bg.make_button("beach", "beach_button", xalign=0.5, yalign=0.5)
+
+## Music Gallery screen ############################################################
+##
+## This is a simple screen that shows buttons that play a music track.
+
+screen music_gallery:
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one.
+    use extras_menu("Music Room"):
+
+        vbox:
+
+            xalign 0.5
+            yalign 0.5
+
+            # The buttons that play each track.
+            textbutton "The Concrete Brakes" action mr.Play("audio/The-Concrete-Bakes_Looping.mp3")
+            textbutton "Sculpture Garden" action mr.Play("audio/Sculpture-Garden_Looping.mp3")
+            textbutton "Future Business" action mr.Play("audio/Future-Business_v001.mp3")
+            textbutton "Careless Summer" action mr.Play("audio/Careless-Summer_Looping.mp3")
+
+            null height 20
+
+            hbox:
+            # Buttons that let us advance through tracks.
+                textbutton "Previous" action mr.Previous()
+                textbutton "Next" action mr.Next()
+
+            null height 20
+
+        # Start the music playing on entry to the music room.
+        on "replace" action mr.Play()
+
+        # Restore the main menu music upon leaving.
+        on "replaced" action Play("music", "audio/The-Concrete-Bakes_Looping.mp3")
+
+## Replay Gallery screen ############################################################
+##
+## This is a simple screen that shows buttons that replay a scene from the game.
+
+screen replay_gallery:
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one.
+    use extras_menu("Replay Room"):
+
+        vbox:
+
+            xalign 0.5
+            yalign 0.5
+
+            # The buttons that play each track.
+            textbutton "The Beginning" action Replay("start")
+            textbutton "The Office" action Replay("office")
+            textbutton "The Beach" action Replay("beach")
+
+            null height 20
+
+## Dev Notes screen ############################################################
+##
+## This screen contains a message for players after they beat the entire game.
+## We borrowed the base of this screen from the About screen.
+
+screen dev_notes():
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one. The
+    ## vbox child is then included inside the viewport inside the extras_menu
+    ## screen.
+    use extras_menu(_("Developer's Notes"), scroll="viewport"):
+
+        style_prefix "about"
+
+        vbox:
+
+            ## gui.dev_notes is usually set in options.rpy.
+            if gui.dev_notes:
+                text "[gui.dev_notes!t]\n"
+
+
+## Type your special message here.
+define gui.dev_notes = _p("""Hello, this is BáiYù of tofurocks here. I want to thank
+    you for downloading this All-In-One GUI template to use in your own game. As
+    someone who has received support from the visual novel community in the past,
+    I wanted to give back something that will benefit other developers for no
+    charge neccessary. While the code provided here is almost a straight copy
+    from the official documentation, I purposely kept it very bare-bones so that
+    you can customize the GUI yourself. It can be difficult to understand screen
+    language for those who are newer to Ren'Py or aren't as savy with programming,
+    so I hope that by sharing this with others, the overall quality of all Ren'Py
+    games will improve.
+
+    Thank you for taking the time to read this, and I wish you the best on your
+    development adventures to come.""")
 
 
 ################################################################################

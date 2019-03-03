@@ -12,7 +12,7 @@
 ##
 ## The _() surrounding the string marks it as eligible for translation.
 
-define config.name = _("Separate History Screen")
+define config.name = _("All-In-One GUI Template")
 
 
 ## Determines if the title given above is shown on the main menu screen. Set
@@ -23,18 +23,23 @@ define gui.show_name = True
 
 ## The version of the game.
 
-define config.version = "1.1"
+define config.version = "1.0"
 
 
 ## Text that is placed on the game's about screen. Place the text between the
 ## triple-quotes, and leave a blank line between paragraphs.
 
-define gui.about = _p("""This Ren'Py code was put together by BáiYù and released into {a=https://creativecommons.org/publicdomain/zero/1.0/}Public Domain{/a},
-    meaning you may modify and use this code in any games you make, even commercial ones, without needing to credit or ask for permission.
-    This code separates the History screen from the Game Menu screens, and can be found in screens.rpy
-    \nRoom Background made by {a=https://lemmasoft.renai.us/forums/viewtopic.php?f=52&t=17302&start=645#p470505}mugenjohncel{/a}
-    \nEileen sprite made in {a=https://ar14.itch.io/mannequin}Mannequin{/a}
-    \nIf you'd like to see more free Ren'Py codes and GUIs or support the other things I do, consider subscribing to me on {a=https://www.patreon.com/tofurocks}Patreon{/a} or visiting my {a=http://www.tofu.rocks/}website{/a}.
+define gui.about = _p("""This Ren'Py GUI Template was put together by BáiYù
+    and released with a {a=https://opensource.org/licenses/MIT}MIT license{/a},
+    meaning you may modify and use this code in any games you make, even
+    commercial ones. You do not to need to credit or ask for permission from me 
+    to use the code in this project. If you wish to use the visual and audio
+    assets in your game, please refer to those individual licenses.
+    \nEileen Sprite made with {a=https://ar14.itch.io/mannequin}Mannequin by AR14{/a}
+    \nBackgrounds made by {a=https://lemmasoft.renai.us/forums/viewtopic.php?f=52&t=17302}mugenjohncel{/a}
+    \nMusic composed by {a=https://soundimage.org/}Eric Matyas{/a}
+    \nIf you'd like to see more free Ren'Py codes and GUIs in the future or
+    support the other things I do, consider pledging to me on {a=https://www.patreon.com/tofurocks}Patreon{/a}.
 """)
 
 
@@ -42,7 +47,7 @@ define gui.about = _p("""This Ren'Py code was put together by BáiYù and releas
 ## distribution. This must be ASCII-only, and must not contain spaces, colons,
 ## or semicolons.
 
-define build.name = "SeparateHistoryScreen"
+define build.name = "All-In-OneGUITemplate"
 
 
 ## Sounds and music ############################################################
@@ -66,7 +71,7 @@ define config.has_voice = True
 ## the player is at the main menu. This file will continue playing into the
 ## game, until it is stopped or another file is played.
 
-# define config.main_menu_music = "main-menu-theme.ogg"
+define config.main_menu_music = "audio/The-Concrete-Bakes_Looping.mp3"
 
 
 ## Transitions #################################################################
@@ -147,7 +152,7 @@ default preferences.afm_time = 15
 ## This generally should not be changed, and if it is, should always be a
 ## literal string, not an expression.
 
-define config.save_directory = "SeparateHistoryScreen-1519690375"
+define config.save_directory = "All-In-OneGUITemplate-1551133530"
 
 
 ## Icon ########################################################################
