@@ -1,6 +1,15 @@
-# TO-DO: FIGURE OUT WHY renpy.count_dialogue_blocks() IS NOT WORKING PROPERLY
-
 # The script of the game goes in this file.
+
+# Set up LayeredImage Sprites
+layeredimage eileen:
+
+    always "eileen_base"
+
+    always "eileen_headband":
+        yoffset 25
+
+    group face auto:
+        attribute happy default
 
 # Declare characters used by this game. The color argument colorizes the
 # name of the character.
@@ -9,53 +18,97 @@ define e = Character("Eileen", color="#f88787")
 define e_nvl = Character("Eileen", color="#f88787", kind=nvl)
 define nar_nvl = nvl_narrator
 
-init python:
+image extras_unlock = Text("{size=60}You've unlocked the Extras Menu. Access it through the Main Menu.{/s}", text_align=0.5)
+image devnotes_unlock = Text("{size=60}You've unlocked a special message. Access it through the Extras Menu.{/s}", text_align=0.5)
 
-    ## This creates the End Credits portion.
+## Splashscreen ############################################################
+## A portion of the game that plays at launch, before the main menu is shown.
+
+## Setting up images for use in the splashscreen
+image renpy_name = Text("{size=60}Made with Ren'Py [renpy.version_only]{/s}", text_align=0.5)
+
+## The animation is kinda tacky so I recommend using something else.
+## ATL documentation: https://www.renpy.org/doc/html/atl.html
+
+image splash_anim_1:
+
+    "gui/renpy-logo.png"
+    xalign 0.5 yalign -0.5
+    ease_quad 5.0 xalign 0.5 yalign 0.5 rotate 360
+    linear 2.0 zoom 2.0
+
+image splash_anim_2:
+    "renpy_name"
+    xalign 0.5 yalign 0.8 alpha 0.0
+    pause 6.0
+    linear 1.0 alpha 1.0
+
+label splashscreen:
+
+    scene black
+
+    ## The first time the game is launched, players can set their accessibility settings.
+    if not persistent.caption:
+
+        menu:
+
+            "Do you want sound captions on? They describe music and sound effects in text.{fast}"
+
+            "On":
+
+                $ persistent.sound_captions = True
+
+            "Off":
+
+                pass
+
+        menu:
+
+            "Do you want image captions on? They describe game visuals in text.{fast}"
+            "On":
+
+                $ persistent.image_captions = True
+
+            "Off":
+
+                pass
+
+        "These options can be changed at any time in the menu.{fast}"
+
+        ## This message will not appear in subsequent launches of the game when
+        ## the following variable becomes true.
+        $ persistent.caption = True
+
+    ## Here begins our splashscreen animation.
+    show splash_anim_1
+    show splash_anim_2
     
-    credits = ('Music', 'Eric Matyas'), ('Backgrounds', 'mugenjohncel'), ('Sprites', 'Mannequin by AR14'), ('Programming', 'BáiYù')
-    credits_s = "{size=80}Credits\n\n"
-    c1 = ''
-    for c in credits:
-        if not c1==c[0]:
-            credits_s += "\n{size=40}" + c[0] + "\n"
-        credits_s += "{size=60}" + c[1] + "\n"
-        c1=c[0]
-    credits_s += "\n\nMade with {a=https://www.renpy.org/}Ren'Py{/a} [renpy.version_only]."
-
-    ## This creates a percentage based on how much of the game the player has seen.
+    ## The first time the game is launched, players cannot skip the animation.
+    if not persistent.seen_splash:
+        
+        ## No input will be detected for the set time stated.
+        ## Set this to be a little longer than how long the animation takes.
+        $ renpy.pause(8.5, hard=True)
+ 
+        $ persistent.seen_splash = True
     
-    # numblocks = renpy.count_dialogue_blocks()
-    # def percent():
-    #     global result
-    #     result = renpy.count_seen_dialogue_blocks()* 100 / numblocks
+    ## Players can skip the animation in subsequent launches of the game.
+    else:
+ 
+        if renpy.pause(8.5):
+ 
+            jump skip_splash
 
-init:
+    scene black
+    with fade
+ 
+    label skip_splash:
+ 
+        pass
+ 
+    return
 
-    # Tracks how much of the game the player has seen.
-
-    # default result = 0
-
-    ## Image Displayables generated in-engine for use in the End Credits.
-
-    # image cred = Text(credits_s, font="font.ttf", text_align=0.5) #use this if you want to use special fonts
-    image cred = Text(credits_s, text_align=0.5)
-    image theend = Text("{size=80}Fin", text_align=0.5)
-    image thanks = Text("{size=80}Thanks for Playing!", text_align=0.5)
-    #image game_results = Text("{size=80}You've seen [result]\% of the game.{/s}", text_align=0.5)
-    #image devnote_unlock = Text("{size=80}You've unlocked a special message. Access it through the Extras Menu.", text_align=0.5)
-    #image extras_unlock = Text("{size=80}You've unlocked the Extras Menu. Access it through the Main Menu.", text_align=0.5)
-
-    ## Lets the engine know that this variable is False when the game is first played.
-    define persistent.extras_unlocked = False
-
-    ## We give the music files a short name so we can easily call them in the script.
-    define audio.summer = "audio/Careless-Summer_Looping.mp3"
-    define audio.office = "audio/Future-Business_v001.mp3"
-    define audio.garden = "audio/Sculpture-Garden_Looping.mp3"
-    define audio.concrete = "audio/The-Concrete-Bakes_Looping.mp3"
-
-# The game starts here.
+## The game starts here.
 
 label start:
 
@@ -65,21 +118,31 @@ label start:
 
     scene room
 
-    # This shows a character sprite. A placeholder is used, but you can
-    # replace it by adding a file named "eileen happy.png" to the images
-    # directory.
+    # This shows a character sprite.
 
     show eileen happy at center:
-        yoffset 200
 
+        ## Sprite generated by Mannequin are fullbody, so we do need to
+        ## move Eileen down slightly so she's not floating about.
+        yoffset 250
+
+    # Placing the effect after both image statements will apply said
+    # effect on both images.
+    
     with fade
 
-    # This plays music that plays at full volume after 2 seconds
+    # This plays our music file in a way that if audio captions are on,
+    # it will tell us the name of the song. This music plays at full volume
+    # after 2 seconds and fades out after 2 seconds when stopped.
+    $ play_music(garden,fadein=2.0,fadeout=2.0)
 
-    play music garden fadein 2.0
+    # This unlocks the the achievement with the corresponding name
+    $ achievement.grant("Beginning")
 
-    # Makes [result] work.
-    # $ percent()
+    # This adds an integer value to a point-based achievement.
+    # To track how much of it has been earned, use a regular variable for now.
+    $ achievement.progress("Point_Collector", 10)
+    $ persistent.points += 10
 
     # These display lines of dialogue.
 
@@ -91,23 +154,101 @@ label start:
 
     e "Once you add a story, pictures, and music, you can release it to the world!"
 
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ullamcorper porta ipsum sit amet sodales."
+    show eileen happy with dissolve
+
+    e "Haha, sorry. Had to get that out of the way first."
+
+    e "Thanks for downloading this All-In-One GUI Template! After you play through this script, be sure to open up the files and adapt them to your project's needs."
+
+    e "You can even make a copy of the entire {color=#32CD32}game{/color} folder and start your project from there."
+    
+    e "So now, let's demonstrate some of the custom Accessibility Options."
+
+    e "When you run this project for the first time, you should have been able to adjust the Audio and Image Caption options."
+
+    e "I'll make some sounds now. If Audio Captions are on, you'll see a notification in the top-left corner describing the sound."
+    
+    # This plays our sound file in a way that if audio captions are on,
+    # it will describe the sound being played.
+    $ play_sound(door)
+
+    e "Let's close this so the breeze doesn't mess up my hair..."
+
+    $ play_sound(drawer_open)
+
+    e "Let me look for a pen..."
+
+    $ play_sound(drawer_close)
+
+    e "Not in there?"
+
+    $ play_sound(drawer_open)
+
+    e "Maybe here?"
+
+    $ play_sound(drawer_close)
+
+    e "Found it!"
+
+    e "If you had your Audio Captions on, you should have seen something appear in the notification tab."
+
+    e "Neat, right?"
+
+    e "Now let's test Image Captions."
+
+    show eileen at right with move
+
+    ic "Eileen walks to the right of the room."
+
+    e "Over here..."
+
+    show eileen at left with move
+
+    ic "Eileen walks to the left of the room."
+
+    e "Now here..."
+
+    show eileen at center with move
+
+    ic "Eileen walks to the center of the room."
+
+    e "And there we go!"
+
+    e "If you had your Image Captions on, then you should have seen some extra narration describing my movements."
+
+    e "This is done with the special {color=#32CD32}{i}ic{/i}{/color} speaker tag we defined in {color=#32CD32}{i}captiontool.rpy{/i}{/color}."
+
+    e "Now, let's test the Screen Shake settings."
+
+    $ shake()
 
     show eileen surprised with dissolve
 
-    nar_nvl "Etiam auctor maximus tellus, eget venenatis justo euismod at."
+    ic "The room shakes."
 
-    e_nvl "Integer eget quam eu felis tempus volutpat. Donec et quam sit amet justo interdum feugiat. Suspendisse tempus id metus ac imperdiet."
+    e "Ah! An earthquake!"
 
-    nar_nvl "Maecenas sit amet sagittis ligula, eget bibendum sapien."
+    e "You can turn the screen shaking effect off in Preferences, just in case the motion makes you sick. One more time."
+
+    $ shake()
+
+    ic "The room shakes again."
+
+    e "Now let's try NVL Mode."
+
+    nar_nvl "NVL Mode is a different way of displaying text on the screen."
+
+    e_nvl "Unlike ADV, past lines of dialogue are still displayed until it is cleared off."
+
+    nar_nvl "Usually NVL will cover the entire screen, but you can adjust the size of the window to only cover a certain part if need be."
 
     nvl clear
 
-    e_nvl "Aliquam faucibus ipsum congue velit volutpat pellentesque."
+    e_nvl "Not all games may need to use both ADV and NVL, but it's nice to have options as a developer."
 
-    e_nvl "In vestibulum quam nec mi sollicitudin ultricies at in nunc."
+    e_nvl "With that said, let's go somewhere else."
 
-    nar_nvl "Maecenas convallis rhoncus tortor eu feugiat."
+    nar_nvl "Eileen wonders where she should travel to."
 
     nvl clear
 
@@ -118,7 +259,7 @@ label start:
 
     menu:
 
-        "Choice 1":
+        "Office":
 
             ## This empty label is solely for replay mode purposes.
 
@@ -126,40 +267,43 @@ label start:
 
                 pass
 
-            e "You selected Choice 1."
+            e "To the office? Okay...?"
 
-            $ persistent.c1_seen = True
-            play music office fadein 2.0
+            $ achievement.grant("Office")
+
+            $ play_music(business,fadein=2.0,fadeout=2.0)
+
             scene future_office
             show eileen angry at center:
-                yoffset 200
+                yoffset 250
             with fade
 
-            e "Duis vehicula eros non massa vulputate iaculis. Nulla facilisi."
+            e "Ugh, I don't like it here."
 
-            "Sed lobortis diam urna, rhoncus lobortis odio condimentum eget. Etiam fermentum nibh dui, eget ullamcorper odio elementum eget."
+            "Eileen seems bothered by something."
 
-
-        "Choice 2":
+        "Beach":
 
             label beach:
 
                 pass
 
-            e "You selected Choice 2."
+            e "The beach sounds fun!"
 
-            $ persistent.c2_seen = True
-            play music summer fadein 2.0
+            $ achievement.grant("Beach")
+
+            $ play_music(summer,fadein=2.0,fadeout=2.0)
+
             scene sort_of_beautiful_beach_day
             show eileen upset at center:
-                yoffset 200
+                yoffset 250
             with fade
 
-            e "In urna sem, auctor volutpat ante id, aliquam ultricies augue. Integer eget molestie dolor."
+            e "Oh shoot, I forgot my swimsuit."
 
-            "Integer vehicula hendrerit metus, in laoreet arcu ornare a."
+            "Eileen seems upset by something."
 
-    "Nam ornare eleifend justo, in fermentum ante viverra ullamcorper."
+    "Remember to check the History screen if you have not done so yet."
 
     ## This ends the replay mode segment. Doesn't affect normal gameplay.
     $ renpy.end_replay()
@@ -171,53 +315,52 @@ label credits:
     ## We hide the quickmenu for the End Credits so they don't appear at the bottom.
     $ show_quick_menu = False
 
-    $ credits_speed = 20 # Scrolling speed in seconds
-    scene black # Replace with a proper background if desired
-    with dissolve
-    show theend:
-        yanchor 0.5 ypos 0.5
-        xanchor 0.5 xpos 0.5
-    with dissolve
-    with Pause(0.5)
-    hide theend with dissolve
-    show cred at Move((0.5, 2.2), (0.5, 0.0), credits_speed, repeat=False, bounce=False, xanchor="center", yanchor="bottom")
-    with Pause(credits_speed)
-    show thanks:
-        yanchor 0.5 ypos 0.5
-        xanchor 0.5 xpos 0.5
-    with dissolve
-    with Pause(3)
-    hide thanks with dissolve
+    scene black with fade
 
-    #centered "You've seen [result] of the game."
+    ## Find "End Credits Scroll" in screens.rpy to change text.
+    call screen credits
 
-    if persistent.c1_seen and persistent.c2_seen:
-    #if result == 100:
+    $ persistent.credits_seen = True
 
-        centered "You've unlocked a special message. Access it through the Extras Menu."
-        # show devnote_unlock with dissolve
-        # with Pause(3)
-        # hide devnote_unlock with dissolve
+    # $ _game_menu_screen = "save"
 
-        $ persistent.game_clear = True
-
-    if persistent.extras_unlocked:
-
+    scene black
+    with fade
+    
+    # Players can skip the credits in subsequent playthroughs of the game.
+    label skip_credits:
+ 
         pass
-
-    else:
-
-        centered "You've unlocked the Extras Menu. Access it through the Main Menu."
-        # show extras_unlock with dissolve
-        # with Pause(3)
-        # hide extras_unlock with dissolve
-
-        $ persistent.extras_unlocked = True
 
     ## We re-enable the quickscreen as the credits are over.
 
     $ show_quick_menu = True
 
-    # This ends the game.
+    ## Makes [result] work. This needs to be near the end of the game
+    ## for it to work properly.
+    $ percent()
 
+    ## We display a screen that shows how much the player has seen and played of the game.
+    show screen results
+    
+    centered "Fin"
+
+    if persistent.game_clear:
+
+        pass
+
+    else:
+
+        if readtotal == 100:
+
+            $ achievement.grant("Completionist")
+            show devnotes_unlock at truecenter
+
+            $ persistent.game_clear = True
+
+            ## The game will show our text displayable so the player can read it
+            ## And only continue when there is input
+            pause
+
+    # This ends the game.
     return

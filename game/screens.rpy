@@ -4,7 +4,6 @@
 
 init offset = -1
 
-
 ################################################################################
 ## Styles
 ################################################################################
@@ -54,11 +53,13 @@ style scrollbar:
     ysize gui.scrollbar_size
     base_bar Frame("gui/scrollbar/horizontal_[prefix_]bar.png", gui.scrollbar_borders, tile=gui.scrollbar_tile)
     thumb Frame("gui/scrollbar/horizontal_[prefix_]thumb.png", gui.scrollbar_borders, tile=gui.scrollbar_tile)
+    unscrollable "hide"
 
 style vscrollbar:
     xsize gui.scrollbar_size
     base_bar Frame("gui/scrollbar/vertical_[prefix_]bar.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
     thumb Frame("gui/scrollbar/vertical_[prefix_]thumb.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
+    unscrollable "hide"
 
 style slider:
     ysize gui.slider_size
@@ -95,10 +96,18 @@ style frame:
 ##
 ## https://www.renpy.org/doc/html/screen_special.html#say
 
+## We need to redefine centered because the new say screen will cause the default
+## centered speaker to have the textbox shown behind it.
+define centered = Character(None, what_style="centered_text", window_style="centered_window", window_background=None)
+
 screen say(who, what):
     style_prefix "say"
 
     window:
+
+        background Transform(style.window.background, alpha=persistent.say_window_alpha)
+        ### IMPORTANT: The Transform() is holding the window background, and the alpha variable ties to our say window alpha found in accessibility.rpy
+
         id "window"
 
         if who is not None:
@@ -107,15 +116,33 @@ screen say(who, what):
                 id "namebox"
                 style "namebox"
                 text who id "who"
+                background Transform(style.namebox.background, alpha=persistent.say_window_alpha)
 
-        text what id "what"
-
+        text what id "what" kerning persistent.say_dialogue_kerning font persistent.pref_text_font size persistent.pref_text_size line_spacing persistent.pref_text_spacing color persistent.pref_text_color
+        ### IMPORTANT: We adjust the kerning, color, font, and size inline here!
 
     ## If there's a side image, display it above the text. Do not display on the
     ## phone variant - there's no room.
     if not renpy.variant("small"):
         add SideImage() xalign 0.0 yalign 1.0
 
+# ### OLD VERSION V
+# screen say(who, what):
+#     style_prefix "say"
+
+#     window:
+#         id "window"
+
+#         if who is not None:
+
+#             window:
+#                 id "namebox"
+#                 style "namebox"
+#                 text who id "who"
+
+#         text what id "what"
+
+# ### OLD VERSION ^
 
 ## Make the namebox available for styling through the Character object.
 init python:
@@ -255,13 +282,15 @@ screen quick_menu():
             xalign 0.5
             yalign 1.0
 
+            ## https://www.renpy.org/doc/html/self_voicing.html#creator-concerns
+            # imagebutton auto "foo.png" action None() alt "foo"
             textbutton _("Back") action Rollback()
             textbutton _("History") action ShowMenu('history')
             textbutton _("Skip") action Skip() alternate Skip(fast=True, confirm=True)
             textbutton _("Auto") action Preference("auto-forward", "toggle")
             textbutton _("Save") action ShowMenu('save')
-            # textbutton _("Q.Save") action QuickSave()
-            # textbutton _("Q.Load") action QuickLoad()
+            textbutton _("Q.Save") action QuickSave()
+            textbutton _("Q.Load") action QuickLoad()
             textbutton _("Prefs") action ShowMenu('preferences')
 
 ## This code ensures that the quick_menu screen is displayed in-game, whenever
@@ -323,9 +352,13 @@ screen navigation():
 
         textbutton _("About") action ShowMenu("about")
 
-        if persistent.extras_unlocked:
+        if main_menu:
 
-            textbutton _("Extras") action ShowMenu("sprite_gallery")
+            textbutton _("Extras") action ShowMenu("achievements")
+
+        else:
+
+            textbutton _("Title") action MainMenu()
 
         if renpy.variant("pc"):
 
@@ -665,11 +698,11 @@ screen file_slots(title):
 
                 textbutton _("<") action FilePagePrevious(max(page-1,1))
 
-                # if config.has_autosave:
-                #     textbutton _("{#auto_page}A") action FilePage("auto")
+                if config.has_autosave:
+                    textbutton _("{#auto_page}A") action FilePage("auto")
 
-                # if config.has_quicksave:
-                #     textbutton _("{#quick_page}Q") action FilePage("quick")
+                if config.has_quicksave:
+                    textbutton _("{#quick_page}Q") action FilePage("quick")
 
                 ## range(1, 10) gives the numbers from 1 to 9.
                 for page in range(1, 9):
@@ -748,7 +781,9 @@ screen preferences():
 
         vbox:
 
+            ## Standard Preferences
             hbox:
+
                 box_wrap True
 
                 if renpy.variant("pc"):
@@ -775,6 +810,84 @@ screen preferences():
 
                 ## Additional vboxes of type "radio_pref" or "check_pref" can be
                 ## added here, to add additional creator-defined preferences.
+
+            null height (4 * gui.pref_spacing)
+
+            ## Accessibility Preferences
+
+            hbox:
+
+                box_wrap True
+
+                ## Change Typeface
+
+                vbox:
+
+                    style_prefix "radio"
+                    label _("Typeface")
+
+                    textbutton "{font=DejaVuSans.ttf}DejaVuSans{/font}" action [changeFont("DejaVuSans.ttf"),SelectedIf(persistent.pref_text_font == "DejaVuSans.ttf")]
+
+                    textbutton "{font=gui/fonts/NotoSans-Regular.ttf}NotoSans{/font}" action [changeFont("gui/fonts/NotoSans-Regular.ttf"),SelectedIf(persistent.pref_text_font == "gui/fonts/NotoSans-Regular.ttf")]
+
+                    textbutton "{font=gui/fonts/OpenDyslexic-Regular.otf}OpenDyslexic{/font}" action [changeFont("gui/fonts/OpenDyslexic-Regular.otf"),SelectedIf(persistent.pref_text_font == "gui/fonts/OpenDyslexic-Regular.otf")]
+
+                    ## A template for adding a different font choice. See Line 129 in
+                    ## accessibility.rpy for more details
+                    # textbutton "{font=gui/fonts/[font.ttf]}Custom Font{/font}" action [changeFont("gui/fonts/[font.ttf]"),SelectedIf(persistent.pref_text_font == "gui/fonts/[font.ttf]")]
+
+                ## Change Font Size
+
+                vbox:
+
+                    style_prefix "radio"
+                    label _("Font Size")
+
+                    textbutton "Large" action [changeScale(newScale="large"),SelectedIf(persistent.pref_text_scale == "large") ]
+                    textbutton "Regular" action [changeScale(newScale="regular"),SelectedIf(persistent.pref_text_scale == "regular") ]
+
+                    # # A template for making a new size option for text rendering
+                    # # Though, there is not much reason to add a small option...
+                    # textbutton "Small" action [changeScale(newScale="small"),SelectedIf(persistent.pref_text_scale == "small") ]
+
+                ## Toggles
+                ## You can also create SetField() buttons with on/off variables if you prefer that look.
+
+                vbox:
+
+                    style_prefix "check"
+                    label _("Toggle")
+                
+                    #Toggle Screenshake
+                    textbutton "Screenshake" action ToggleField(persistent,"screenshake",true_value=True,false_value=False)
+
+                    ## Self-voicing does not work on smartphone devices, so this option only shows if the user is playing on a PC.
+                    if renpy.variant("pc"):
+
+                        textbutton _("Self-Voicing") action Preference("self voicing", "toggle")
+
+                null height (4 * gui.pref_spacing)
+
+                vbox:
+
+                    style_prefix "check"
+                    label _("Captions")
+
+                    textbutton "Song Titles" action ToggleField(persistent,"audio_cues",true_value=True,false_value=False)
+                    textbutton _("SFX Titles") action ToggleVariable("persistent.sound_captions")
+                    textbutton _("Image Descriptions") action ToggleVariable("persistent.image_captions")
+
+                    ## This shows Ren'Py's built-in accessibility menu. This can also be displayed by pressing "A" on the keyboard when playing on a PC. As this option can break the way the game is displayed and also does not support translation as of the latest Ren'Py build, you may want to hide the option.
+                    # textbutton _("More Options...") action Show("_accessibility")
+            
+            null height (4 * gui.pref_spacing)
+
+            ## Set Textbox Opacity
+            vbox:
+                xalign 0.5
+                label _("Textbox Opacity")
+                style_prefix "slider"
+                bar value FieldValue(persistent, 'say_window_alpha', 1.0, max_is_zero=False, offset=0, step=.2)
 
             null height (4 * gui.pref_spacing)
 
@@ -906,6 +1019,7 @@ style slider_vbox:
 ## dialogue history stored in _history_list.
 ##
 ## https://www.renpy.org/doc/html/history.html
+## TODO: Hide scrollbar when there are not enough entries to scroll
 
 screen history():
 
@@ -1380,11 +1494,12 @@ style notify_text:
 ##
 ## https://www.renpy.org/doc/html/screen_special.html#nvl
 
-
 screen nvl(dialogue, items=None):
 
     window:
         style "nvl_window"
+
+        background Transform(style.nvl_window.background, alpha=persistent.say_window_alpha)
 
         has vbox:
             spacing gui.nvl_spacing
@@ -1412,7 +1527,6 @@ screen nvl(dialogue, items=None):
 
     add SideImage() xalign 0.0 yalign 1.0
 
-
 screen nvl_dialogue(dialogue):
 
     for d in dialogue:
@@ -1426,10 +1540,10 @@ screen nvl_dialogue(dialogue):
                 if d.who is not None:
 
                     text d.who:
-                        id d.who_id
+                        id d.who_id kerning persistent.say_dialogue_kerning font persistent.pref_text_font size persistent.pref_text_size
 
                 text d.what:
-                    id d.what_id
+                    id d.what_id kerning persistent.say_dialogue_kerning font persistent.pref_text_font size persistent.pref_text_size
 
 
 ## This controls the maximum number of NVL-mode entries that can be displayed at
@@ -1490,7 +1604,6 @@ style nvl_button:
 
 style nvl_button_text:
     properties gui.button_text_properties("nvl_button")
-
 
 ## Extras screens #################################################################
 ##
@@ -1565,10 +1678,10 @@ init python:
     mr = MusicRoom(fadeout=1.0)
 
     # Add music files.
-    mr.add("audio/Careless-Summer_Looping.mp3", always_unlocked=True)
-    mr.add("audio/Future-Business_v001.mp3")
-    mr.add("audio/Sculpture-Garden_Looping.mp3")
-    mr.add("audio/The-Concrete-Bakes_Looping.mp3")
+    mr.add("audio/music/Careless-Summer_Looping.mp3", always_unlocked=True)
+    mr.add("audio/music/Future-Business_v001.mp3")
+    mr.add("audio/music/Sculpture-Garden_Looping.mp3")
+    mr.add("audio/music/The-Concrete-Bakes_Looping.mp3")
 
 ## Extras Navigation screen ############################################################
 ##
@@ -1584,6 +1697,7 @@ screen extras_navigation():
 
         spacing gui.navigation_spacing
 
+        textbutton _("Achievements") action ShowMenu("achievements")
 
         textbutton _("Sprite Gallery") action ShowMenu("sprite_gallery")
 
@@ -1657,6 +1771,8 @@ screen extras_menu(title, scroll=None, yinitial=0.0):
 
                     transclude
 
+    label title
+
     use extras_navigation
 
 ## Sprite Gallery screen ############################################################
@@ -1686,6 +1802,7 @@ screen sprite_gallery():
 ## Background Gallery screen ############################################################
 ##
 ## This is a simple screen that shows buttons that display a background.
+## You can easily adapt this screen to make a CG or concept art screen.
 
 screen bg_gallery():
 
@@ -1708,7 +1825,7 @@ screen bg_gallery():
 ##
 ## This is a simple screen that shows buttons that play a music track.
 
-screen music_gallery:
+screen music_gallery():
 
     tag menu
 
@@ -1721,10 +1838,10 @@ screen music_gallery:
             yalign 0.5
 
             # The buttons that play each track.
-            textbutton "The Concrete Brakes" action mr.Play("audio/The-Concrete-Bakes_Looping.mp3")
-            textbutton "Sculpture Garden" action mr.Play("audio/Sculpture-Garden_Looping.mp3")
-            textbutton "Future Business" action mr.Play("audio/Future-Business_v001.mp3")
-            textbutton "Careless Summer" action mr.Play("audio/Careless-Summer_Looping.mp3")
+            textbutton "The Concrete Brakes" action mr.Play("audio/music/The-Concrete-Bakes_Looping.mp3")
+            textbutton "Sculpture Garden" action mr.Play("audio/music/Sculpture-Garden_Looping.mp3")
+            textbutton "Future Business" action mr.Play("audio/music/Future-Business_v001.mp3")
+            textbutton "Careless Summer" action mr.Play("audio/music/Careless-Summer_Looping.mp3")
 
             null height 20
 
@@ -1745,7 +1862,7 @@ screen music_gallery:
 ##
 ## This is a simple screen that shows buttons that replay a scene from the game.
 
-screen replay_gallery:
+screen replay_gallery():
 
     tag menu
 
@@ -1802,6 +1919,303 @@ define gui.dev_notes = _p("""Hello, this is BáiYù of tofurocks here. I want to
     Thank you for taking the time to read this, and I wish you the best on your
     development adventures to come.""")
 
+## Achievements screen ############################################################
+##
+## This custom screen contains a list of achievements for the game.
+## Official Documentation: https://www.renpy.org/doc/html/achievement.html
+## Additional writeup by bobcgames:
+## Part 1: http://bobcgames.com/blog/archives/48/
+## Part 2: http://bobcgames.com/blog/archives/54/
+## Roselia Achievements Module: https://github.com/OlegWock/Roselia-achievements/
+
+## List achievements that are either True or False here
+python early:
+    simple_achievement_list = (
+        # ("Achievement Name", "Description when not unlocked", "Description when unlocked"),
+        ("Beginning", "???", "Started a new game"),
+        ("Office", "???", "Went to the office"),
+        ("Beach", "???", "Went to the beach"),
+        ("Completionist", "???", "Read all of the game")
+    )
+
+## Registers your achievements to work on backend systems such as Steam
+## Be sure to match the name of the achievement in achievement_list and
+## the corresponding achievement.grant or achievement.progress in the script.
+
+init python:
+
+    for a, lockdesc, unlockdesc in simple_achievement_list:
+
+        ## This auto-populates the achievements to register on the backend
+        achievement.register(a)
+
+        ## This Achievement is based on an integer, and must be defined manually
+        achievement.register("Point Collector", stat_max=100, stat_modulo=0)
+        ## TODO: Simplify achievements that are integer-based
+        ## to update in a bar directly tied to achievement.progress
+
+## For our Point Collector Achievement
+default persistent.points = 0
+
+## Our actual achievements screen
+screen achievements():
+
+    tag menu
+
+    ## This use statement includes the extras_menu screen inside this one. The
+    ## vbox child is then included inside the viewport inside the extras_menu
+    ## screen.
+    use extras_menu(_("Achievements"), scroll="viewport"):
+
+        ## This screen doesn't need anything fancy, so we borrow the style
+        ## from the About screen, which just displays text.
+        style_prefix "about"
+
+        vbox:
+
+            ## This auto-populates our list of simple achievements that will appear
+            ## in the screen, so we don't have to manually type each one out.
+            for aname, lockdesc, unlockdesc in simple_achievement_list:
+
+                if achievement.has(aname):
+
+                    text "[aname]: [unlockdesc]"
+
+                else:
+
+                    text "[aname]: [lockdesc]"
+
+            ## We have to type each integer based achievement however
+            hbox:
+                text "Point Collector:"
+
+                null width 10
+
+                bar value persistent.points range 100 xsize 525
+
+            text "[persistent.readtotal]% of the game read"
+
+## End Credits Scroll ############################################################
+## ATL for scrolling screen object. In this case, credits roll.
+## Speed is the time for object to move up from initial ypos to finish ypos.
+
+## Code Source: https://lemmasoft.renai.us/forums/viewtopic.php?t=42667
+
+transform credits_scroll(speed):
+    ypos 2700
+    linear speed ypos -2700
+    ## Adjust these numbers to be the height of your end credits. Both numbers
+    ## should be the same.
+
+## Credits screen.
+
+screen credits():
+
+    ## Ensure that the game_menu screens don't appear and interrupt the credits.
+    key "K_ESCAPE" action NullAction()
+    key "K_MENU" action NullAction()
+    key "mouseup_3" action NullAction()
+
+    style_prefix "credits"
+
+    ## If a player has seen the end credits before, this button appears.
+    if persistent.credits_seen:
+
+        textbutton _("Skip End Credits") action Jump("skip_credits") xalign 1.0 yalign 1.0
+
+    timer 15.0 action Return()
+    ## Adjust this number to control when the Credits screen is hidden and the game
+    ## returns to its normal flow.
+    ## Ideally, there is some wait time after the the credits reaches the end.
+
+    frame at credits_scroll(10.0):
+        ## Adjust this number to control the speed at which the credits scroll.
+        background None
+        xalign 0.5
+
+        vbox:
+            label "Credits" xalign 0.5
+
+            null height 300
+
+            text "Producer" size 100
+            null height 50
+            text "BáiYù"
+
+            #null height 200
+
+            # text "Logo" size 100
+            # null height 50
+            # text "Lorem Ipsum"
+
+            #null height 200
+
+            # text "Script" size 100
+            # null height 50
+            # text "Lorem Ipsum"
+
+            null height 200
+            
+            text "Art" size 100
+            null height 50
+
+            text "Mannequin by HelloAR14"
+
+            null height 50
+
+            text "Uncle Mugen" 
+
+            null height 200
+
+            text "Soundtrack" size 100
+            null height 50 
+
+            text "Eric Matyas"
+
+            null height 200
+
+            # text "GUI Template" size 100
+            text "Programming" size 100
+            null height 50
+
+            hbox:
+
+                xalign 0.5
+                spacing 200
+
+                text "BáiYù"
+
+                text "bobcgames"
+
+            null height 50
+
+            hbox:
+
+                xalign 0.5
+                spacing 200
+
+                text "minute" 
+
+                text "npckc" 
+
+            null height 200
+
+            # text "Trailer" size 100
+            # null height 50
+            # text "Lorem Ipsum"
+
+            # null height 200
+
+            # text "Voiceover" size 100
+            # null height 50 
+
+            # hbox:
+            #     xalign 0.5
+            #     spacing 250
+
+            #     vbox:
+
+            #         text "Lorem Ipsum"
+
+            #     vbox:
+
+            #         text "Lorem Ipsum"
+
+            # null height 200
+
+            # text "Backers" size 100
+            # null height 50
+
+            # hbox:
+
+            #     xalign 0.5
+            #     spacing 100
+            #     style_prefix "backercredits"
+
+            #     vbox:
+
+            #         text "Lorem Ipsum"
+
+            #     vbox:
+
+            #         text "Lorem Ipsum"
+
+            #     vbox:
+
+            #         text "Lorem Ipsum"
+
+            text "Made with Ren'Py [renpy.version_only]." size 100
+
+            null height 450
+
+            text "Thanks for Playing!" size 100
+
+style credits_hbox:
+    spacing 40
+    ysize 30
+
+style credits_label_text:
+    xalign 0.5
+    size 200
+    text_align 0.5
+
+style credits_text:
+    xalign 0.5
+    size 80
+    justify True
+    text_align 0.5
+
+style backercredits_text:
+    xalign 0.5
+    size 50
+    justify True
+    text_align 0.5
+
+## Results Screen ############################################################
+## A screen that displays how much of the game the player has seen.
+
+## Code Source: https://lemmasoft.renai.us/forums/viewtopic.php?t=39859
+## Official Documentation of function: https://www.renpy.org/doc/html/other.html#renpy.count_dialogue_blocks
+
+# This creates a percentage based on how much of the game the player has seen. 
+init python:
+
+    numblocks = renpy.count_dialogue_blocks()
+
+    def percent():
+
+        global readtotal
+        readtotal = renpy.count_seen_dialogue_blocks()* 100 / numblocks
+        persistent.readtotal = readtotal
+        ## This is displayed in our Achievements screen.
+
+default readtotal = 0
+
+screen results():
+    
+    zorder 200
+
+    vbox:
+        xalign .5
+        yalign .2
+        spacing 45
+
+        text "Script Seen: [readtotal]%" color "#fff"
+
+## TODO: Figure out how to get total game time working properly
+## https://lemmasoft.renai.us/forums/viewtopic.php?t=40407
+## Official Documentation of function: https://www.renpy.org/doc/html/other.html#renpy.get_game_runtime
+
+# default playtime = 0
+
+# init 2 python:
+
+#     def total_playtime(d):
+#         renpy.store.playtime += renpy.get_game_runtime()
+#         #renpy.clear_game_runtime()
+#         d["playtime"] = renpy.store.playtime
+
+    # config.save_json_callbacks = [total_playtime]
 
 ################################################################################
 ## Mobile Variants
@@ -1883,12 +2297,14 @@ style scrollbar:
     ysize gui.scrollbar_size
     base_bar Frame("gui/phone/scrollbar/horizontal_[prefix_]bar.png", gui.scrollbar_borders, tile=gui.scrollbar_tile)
     thumb Frame("gui/phone/scrollbar/horizontal_[prefix_]thumb.png", gui.scrollbar_borders, tile=gui.scrollbar_tile)
+    unscrollable "hide"
 
 style vscrollbar:
     variant "small"
     xsize gui.scrollbar_size
     base_bar Frame("gui/phone/scrollbar/vertical_[prefix_]bar.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
     thumb Frame("gui/phone/scrollbar/vertical_[prefix_]thumb.png", gui.vscrollbar_borders, tile=gui.scrollbar_tile)
+    unscrollable "hide"
 
 style slider:
     variant "small"
