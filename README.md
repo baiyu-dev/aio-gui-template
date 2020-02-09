@@ -13,3 +13,4 @@ Currently includes the following:
 
 Disclaimer: I'm not entirely how GitHub works so please download this from the itch.io page.
 Honestly it's probably for the best that you do.
+https://tofurocks.itch.io/renpy-gui-template
