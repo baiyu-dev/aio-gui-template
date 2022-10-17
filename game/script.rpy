@@ -1,87 +1,64 @@
-# The script of the game goes in this file.
+﻿# The script of the game goes in this file.
 
 # Set up LayeredImage Sprites
 layeredimage eileen:
 
-    always "eileen_base"
+    group base auto:
+        attribute casual default
 
-    always "eileen_headband":
-        yoffset 25
+    if casual:
+        pos (0, 40)
+        "eileen_headband"
 
     group face auto:
-        attribute happy default
+        attribute neutral default
+
+# This adds Eileen's headband to her sprite when True
+default casual = True
 
 # Declare characters used by this game. The color argument colorizes the
 # name of the character.
 
-define e = Character("Eileen", color="#f88787")
-define e_nvl = Character("Eileen", color="#f88787", kind=nvl)
+define e = Character("Eileen", color="#f88787", image="eileen")
+define e_nvl = Character("Eileen", color="#f88787", kind=nvl, image="eileen")
 define nar_nvl = nvl_narrator
-
-image extras_unlock = Text("{size=60}You've unlocked the Extras Menu. Access it through the Main Menu.{/s}", text_align=0.5)
-image devnotes_unlock = Text("{size=60}You've unlocked a special message. Access it through the Extras Menu.{/s}", text_align=0.5)
 
 ## Splashscreen ############################################################
 ## A portion of the game that plays at launch, before the main menu is shown.
+## https://www.renpy.org/doc/html/splashscreen_presplash.html
 
-## Setting up images for use in the splashscreen
-image renpy_name = Text("{size=60}Made with Ren'Py [renpy.version_only]{/s}", text_align=0.5)
-
-## The animation is kinda tacky so I recommend using something else.
+## The animation is boring so I recommend using something else.
 ## ATL documentation: https://www.renpy.org/doc/html/atl.html
 
 image splash_anim_1:
 
     "gui/renpy-logo.png"
-    xalign 0.5 yalign -0.5
-    ease_quad 5.0 xalign 0.5 yalign 0.5 rotate 360
-    linear 2.0 zoom 2.0
+    xalign 0.5 yalign 0.5 alpha 0.0
+    ease_quad 7.0 alpha 1.0 zoom 2.0
 
-image splash_anim_2:
-    "renpy_name"
-    xalign 0.5 yalign 0.8 alpha 0.0
-    pause 6.0
-    linear 1.0 alpha 1.0
+default persistent.firstlaunch = False
 
 label splashscreen:
 
     scene black
 
     ## The first time the game is launched, players can set their accessibility settings.
-    if not persistent.caption:
+    if not persistent.firstlaunch:
 
-        menu:
+        ## This screen is at the top of extras.rpy
 
-            "Do you want sound captions on? They describe music and sound effects in text.{fast}"
+        call screen splash_settings
 
-            "On":
-
-                $ persistent.sound_captions = True
-
-            "Off":
-
-                pass
-
-        menu:
-
-            "Do you want image captions on? They describe game visuals in text.{fast}"
-            "On":
-
-                $ persistent.image_captions = True
-
-            "Off":
-
-                pass
-
-        "These options can be changed at any time in the menu.{fast}"
-
-        ## This message will not appear in subsequent launches of the game when
+        ## This screen will not appear in subsequent launches of the game when
         ## the following variable becomes true.
-        $ persistent.caption = True
+        $ persistent.firstlaunch = True
 
     ## Here begins our splashscreen animation.
     show splash_anim_1
-    show splash_anim_2
+    show text "{size=60}Made with Ren'Py [renpy.version_only]{/s}":
+        xalign 0.5 yalign 0.8 alpha 0.0
+        pause 6.0
+        linear 1.0 alpha 1.0
     
     ## The first time the game is launched, players cannot skip the animation.
     if not persistent.seen_splash:
@@ -141,8 +118,8 @@ label start:
 
     # This adds an integer value to a point-based achievement.
     # To track how much of it has been earned, use a regular variable for now.
-    $ achievement.progress("Point_Collector", 10)
-    $ persistent.points += 10
+    # $ achievement.progress("Point_Collector", 10)
+    # $ persistent.points =+ 10
 
     # These display lines of dialogue.
 
@@ -158,7 +135,7 @@ label start:
 
     e "Haha, sorry. Had to get that out of the way first."
 
-    e "Thanks for downloading this All-In-One GUI Template! After you play through this script, be sure to open up the files and adapt them to your project's needs."
+    e "Thanks for downloading this All-In-One GUI Template! After you play through this script, be sure to open up the files and adjust the {color=#32CD32}options.rpy{/color}, {color=#32CD32}gui.rpy{/color}, and {color=#32CD32}screens.rpy{/color} to fit your own project's needs!"
 
     e "You can even make a copy of the entire {color=#32CD32}game{/color} folder and start your project from there."
     
@@ -216,7 +193,7 @@ label start:
 
     e "If you had your Image Captions on, then you should have seen some extra narration describing my movements."
 
-    e "This is done with the special {color=#32CD32}{i}ic{/i}{/color} speaker tag we defined in {color=#32CD32}{i}captiontool.rpy{/i}{/color}."
+    e "This is done with the special {color=#32CD32}{i}ic{/i}{/color} speaker tag we defined in {color=#32CD32}{i}accessibility.rpy{/i}{/color}."
 
     e "Now, let's test the Screen Shake settings."
 
@@ -226,15 +203,17 @@ label start:
 
     ic "The room shakes."
 
-    e "Ah! An earthquake!"
+    e upset "If you had it on, did you notice how robust that Screen Shake was? That wasn't the classic {color=#32CD32}{i}hpunch{/i}{/color}."
 
-    e "You can turn the screen shaking effect off in Preferences, just in case the motion makes you sick. One more time."
+    e"This time around, we added in a custom Shake function that is randomized each time, with varying levels of intensity you can choose from."
+
+    e "You can turn the screen shaking effect off in Preferences, just in case the motion makes you or your players sick. One more time."
 
     $ shake()
 
     ic "The room shakes again."
 
-    e "Now let's try NVL Mode."
+    e happy "Now let's try NVL Mode."
 
     nar_nvl "NVL Mode is a different way of displaying text on the screen."
 
@@ -250,14 +229,12 @@ label start:
 
     nar_nvl "Eileen wonders where she should travel to."
 
-    nvl clear
-
     stop music fadeout 1.0
 
     ## This ends the replay mode segment. Doesn't affect normal gameplay.
     $ renpy.end_replay()
 
-    menu:
+    menu (nvl=True):
 
         "Office":
 
@@ -278,7 +255,7 @@ label start:
                 yoffset 250
             with fade
 
-            e "Ugh, I don't like it here."
+            e "Ugh, you know that saying about \"all work and no play,\" right?"
 
             "Eileen seems bothered by something."
 
@@ -294,35 +271,39 @@ label start:
 
             $ play_music(summer,fadein=2.0,fadeout=2.0)
 
+            hide eileen with dissolve
+            $ casual = False
+
             scene sort_of_beautiful_beach_day
-            show eileen upset at center:
-                yoffset 250
+            show eileen summer happy at center:
+                yoffset 230
             with fade
 
-            e "Oh shoot, I forgot my swimsuit."
+            e "Hehe, I have a swimsuit now!"
 
-            "Eileen seems upset by something."
+            "Eileen seems pleased with herself."
 
     "Remember to check the History screen if you have not done so yet."
 
     ## This ends the replay mode segment. Doesn't affect normal gameplay.
     $ renpy.end_replay()
 
+## End Credits
 label credits:
-    
-    # End Credits
 
-    ## We hide the quickmenu for the End Credits so they don't appear at the bottom.
-    $ show_quick_menu = False
+    ## We hide the quickmenu for the last part of the game so they don't
+    ## appear at the bottom.
+    $ quick_menu = False
+
+    ## We hide the textbox as well so it doesn't mess with things
+    window hide
 
     scene black with fade
 
-    ## Find "End Credits Scroll" in screens.rpy to change text.
-    call screen credits
+    ## Find "End Credits Scroll" in extras.rpy to change text.
+    call screen credits(15.0)
 
     $ persistent.credits_seen = True
-
-    # $ _game_menu_screen = "save"
 
     scene black
     with fade
@@ -331,10 +312,6 @@ label credits:
     label skip_credits:
  
         pass
-
-    ## We re-enable the quickscreen as the credits are over.
-
-    $ show_quick_menu = True
 
     ## Makes [result] work. This needs to be near the end of the game
     ## for it to work properly.
@@ -345,22 +322,34 @@ label credits:
     
     centered "Fin"
 
+    hide screen results
+
     if persistent.game_clear:
 
         pass
 
+    ## Do you want to leave some author's notes or a hidden message for your dedicated fans?
+    ## This will check if they've seen all that the game has to offer.
     else:
 
         if readtotal == 100:
 
             $ achievement.grant("Completionist")
-            show devnotes_unlock at truecenter
+
+            ## Due to the way that $ percent() works, we need to make this a text displayable
+            ## or else it'll try to count it too.
+            show text "{size=60}{color=#ffffff}You've unlocked a special message.\nAccess it through the Extras Menu.{/color}{/s}":
+                xalign 0.5 yalign 0.5 alpha 0.0
+                linear 1.0 alpha 1.0
 
             $ persistent.game_clear = True
 
             ## The game will show our text displayable so the player can read it
             ## And only continue when there is input
             pause
+
+    ## We re-enable the quickscreen as the credits are over.
+    $ quick_menu = True
 
     # This ends the game.
     return

@@ -1,10 +1,50 @@
 ## This is a resource name loader that will import the names of files from certain folders
-## Intended as a way to quickly grab file names to use in accessibility.rpy, screens.rpy, and captiontool.rpy
+## Intended as a way to quickly grab file names to use in accessibility.rpy and screens.rpy
 ## Remember to add commas to the end of each listed item
 ## As of RenPy7, basic images do not have to be defined (LayeredImages still need to be set up)
 init -1:
-    $ redefine_resources = True
+    $ redefine_resources = False
     ## When you add, delete or rename an image or music resource, change redefine_resources to True and launch the project
+
+## Sprites:
+    # image eileen_base_casual = "images/sprites/eileen_base_casual.png"
+    # image eileen_base_summer = "images/sprites/eileen_base_summer.png"
+    # image eileen_face_angry = "images/sprites/eileen_face_angry.png"
+    # image eileen_face_happy = "images/sprites/eileen_face_happy.png"
+    # image eileen_face_neutral = "images/sprites/eileen_face_neutral.png"
+    # image eileen_face_surprised = "images/sprites/eileen_face_surprised.png"
+    # image eileen_face_upset = "images/sprites/eileen_face_upset.png"
+    # image eileen_headband = "images/sprites/eileen_headband.png"
+## BGs:
+    # image future_office = "images/BG/future_office.jpg"
+    # image room = "images/BG/room.jpg"
+    # image sort_of_beautiful_beach_day = "images/BG/sort_of_beautiful_beach_day.jpg"
+## CGs:
+
+## Music:
+# init -2 python:
+    # Careless-Summer_Looping = "audio/music/Careless-Summer_Looping.mp3"
+    # Future-Business_v001 = "audio/music/Future-Business_v001.mp3"
+    # Sculpture-Garden_Looping = "audio/music/Sculpture-Garden_Looping.mp3"
+    # The-Concrete-Bakes_Looping = "audio/music/The-Concrete-Bakes_Looping.mp3"
+
+## Music Caption:
+    # Careless-Summer_Looping: _("")
+    # Future-Business_v001: _("")
+    # Sculpture-Garden_Looping: _("")
+    # The-Concrete-Bakes_Looping: _("")
+
+## SFX:
+    # Chest-Drawer_Close = "audio/sfx/Chest-Drawer_Close.mp3"
+    # Chest-Drawer_Open = "audio/sfx/Chest-Drawer_Open.mp3"
+    # Edge-of-Ocean = "audio/sfx/Edge-of-Ocean.mp3"
+    # Interior-Door_Close = "audio/sfx/Interior-Door_Close.mp3"
+
+## SFX Caption:
+    # Chest-Drawer_Close: _("")
+    # Chest-Drawer_Open: _("")
+    # Edge-of-Ocean: _("")
+    # Interior-Door_Close: _("")
 
 ## Script to redefine the images:
 ## !!! DO NOT CHANGE THE CODE BELOW THIS POINT !!!
@@ -19,8 +59,8 @@ init -1 python:
             s=s[pos:]
 
         with open(renpy.loader.transfn('definitions.rpy'), 'wb') as f:
-            f.write('## This is a resource name loader that will import the names of files from certain folders\n## Intended as a way to quickly grab file names to use in accessibility.rpy, screens.rpy, and captiontool.rpy\n## Remember to add commas to the end of each listed item\n## As of RenPy7, basic images do not have to be defined (LayeredImages still need to be set up)\r\ninit -1:\r\n    $ redefine_resources = False\n    ## When you add, delete or rename an image or music resource, change redefine_resources to True and launch the project\r\n\r\n')
-            
+            f.write('## This is a resource name loader that will import the names of files from certain folders\n## Intended as a way to quickly grab file names to use in accessibility.rpy and screens.rpy\n## Remember to add commas to the end of each listed item\n## As of RenPy7, basic images do not have to be defined (LayeredImages still need to be set up)\r\ninit -1:\r\n    $ redefine_resources = False\n    ## When you add, delete or rename an image or music resource, change redefine_resources to True and launch the project\r\n\r\n')
+
             f.write('## Sprites:\r\n')
             for file in renpy.list_files():
                 if file.startswith('images/sprites') and (file.endswith('.png') or file.endswith('.webp')):
