@@ -339,7 +339,7 @@ screen navigation():
 
         if main_menu:
 
-            textbutton _("Extras") action ShowMenu("achievements") alt "Extras"
+            textbutton _("Extras") action ShowMenu("achievements")
 
         if renpy.variant("pc"):
 
@@ -765,41 +765,41 @@ screen preferences():
                 vbox:
                     style_prefix "check"
                     label _("Toggles")
-                    textbutton _("Image Descriptions") action ToggleVariable("persistent.image_captions") alt "Toggle Image Descriptions"
-                    textbutton _("Audio Titles") action ToggleVariable("persistent.sound_captions") alt "Toggle Sound Captions"
+                    textbutton _("Image Descriptions") action ToggleVariable("persistent.image_captions") alt _("Toggle Image Descriptions")
+                    textbutton _("Audio Titles") action ToggleVariable("persistent.sound_captions") alt _("Toggle Sound Captions")
                     if renpy.variant("pc"):
                         ## Self-voicing does not work on smartphone devices, so this
                         ## option only shows if the user is playing on a PC.
-                        textbutton _("Self-Voicing") action Preference("self voicing", "toggle") alt "Toggle Self-Voicing"
-                    textbutton "Screenshake" action ToggleField(persistent,"screenshake",true_value=True,false_value=False) alt "Toggle Screen Shake"
+                        textbutton _("Self-Voicing") action Preference("self voicing", "toggle") alt _("Toggle Self-Voicing")
+                    textbutton "Screenshake" action ToggleField(persistent,"screenshake",true_value=True,false_value=False) alt _("Toggle Screen Shake")
 
                 vbox:
                     style_prefix "radio"
                     label _("Typeface")
-                    textbutton _("DejaVu Sans") action [gui.SetPreference("font", "DejaVuSans.ttf"), gui.SetPreference("size", 31), SetVariable("persistent.typeface", "DejaVuSans")] alt "Change font to DejaVu Sans"
-                    textbutton _("{font=gui/font/Atkinson-Hyperlegible-Regular-102.ttf}{size=40}Hyperlegible{/size}{/font}") action [gui.SetPreference("font", "gui/font/Atkinson-Hyperlegible-Regular-102.ttf"), gui.SetPreference("size", 32), SetVariable("persistent.typeface", "Hyperlegible")] alt "Change font to HyperLegible"
+                    textbutton _("DejaVu Sans") action [gui.SetPreference("font", "DejaVuSans.ttf"), gui.SetPreference("size", 31), SetVariable("persistent.typeface", "DejaVuSans")] alt _("Change font to DejaVu Sans")
+                    textbutton _("{font=gui/font/Atkinson-Hyperlegible-Regular-102.ttf}{size=40}Hyperlegible{/size}{/font}") action [gui.SetPreference("font", "gui/font/Atkinson-Hyperlegible-Regular-102.ttf"), gui.SetPreference("size", 32), SetVariable("persistent.typeface", "Hyperlegible")] alt _("Change font to HyperLegible")
 
                 vbox:
                     style_prefix "radio"
                     label _("Font Size")
                     if persistent.typeface == "DejaVuSans":
-                        textbutton _("Large") action gui.SetPreference("size", 40) alt "Change to Large Size Text"
-                        textbutton _("Regular") action gui.SetPreference("size", 31) alt "Change to Regular Size Text"
+                        textbutton _("Large") action gui.SetPreference("size", 40) alt _("Change to Large Size Text")
+                        textbutton _("Regular") action gui.SetPreference("size", 31) alt _("Change to Regular Size Text")
                     elif persistent.typeface == "Hyperlegible":
-                        textbutton _("Large") action gui.SetPreference("size", 38) alt "Change to Large Size Text"
-                        textbutton _("Regular") action gui.SetPreference("size", 32) alt "Change to Regular Size Text"
+                        textbutton _("Large") action gui.SetPreference("size", 38) alt _("Change to Large Size Text")
+                        textbutton _("Regular") action gui.SetPreference("size", 32) alt _("Change to Regular Size Text")
 
                 vbox:
                     style_prefix "radio"
                     label _("Text Color")
-                    textbutton _("White") action gui.SetPreference("color", "#ffffff") alt "Change text color to white" 
-                    textbutton _("Cream") action gui.SetPreference("color", "#FFFDD0") alt "Change text color to cream" 
+                    textbutton _("White") action gui.SetPreference("color", "#ffffff") alt _("Change text color to white")
+                    textbutton _("Cream") action gui.SetPreference("color", "#FFFDD0") alt _("Change text color to cream")
 
                 vbox:
                     style_prefix "radio"
                     label _("Line Spacing")
-                    textbutton _("Taller") action gui.SetPreference("dialogue_spacing", 4) alt "Change the height of the space between lines of dialogue to be taller"
-                    textbutton _("Regular") action gui.SetPreference("dialogue_spacing", 2) alt "Change the height of the space between lines of dialogue to the regular height"
+                    textbutton _("Taller") action gui.SetPreference("dialogue_spacing", 4) alt _("Change the height of the space between lines of dialogue to be taller")
+                    textbutton _("Regular") action gui.SetPreference("dialogue_spacing", 2) alt _("Change the height of the space between lines of dialogue to the regular height")
 
 
                 ## Additional vboxes of type "radio_pref" or "check_pref" can be
@@ -823,7 +823,7 @@ screen preferences():
 
                     label _("Textbox Opacity")
 
-                    bar value FieldValue(persistent, 'say_window_alpha', 1.0, max_is_zero=False, offset=0, step=.2) xmaximum 525 style "slider" alt "Textbox Opacity"
+                    bar value FieldValue(persistent, 'say_window_alpha', 1.0, max_is_zero=False, offset=0, step=.2) xmaximum 525 style "slider"
 
 
                 vbox:
@@ -1030,7 +1030,7 @@ screen history():
 
                 if not _history_list:
 
-                    text "The text log is empty." line_spacing 10
+                    text "The text log is empty." line_spacing 20
                     ## Adding line_spacing prevents the bottom of the text
                     ## from getting cut off. Adjust when replacing the
                     ## default fonts.

@@ -6,15 +6,8 @@ layeredimage eileen:
     group base auto:
         attribute casual default
 
-    if casual:
-        pos (0, 40)
-        "eileen_headband"
-
     group face auto:
         attribute neutral default
-
-# This adds Eileen's headband to her sprite when True
-default casual = True
 
 # Declare characters used by this game. The color argument colorizes the
 # name of the character.
@@ -199,13 +192,13 @@ label start:
 
     $ shake()
 
-    show eileen surprised with dissolve
+    e upset"...!"
 
     ic "The room shakes."
 
-    e upset "If you had it on, did you notice how robust that Screen Shake was? That wasn't the classic {color=#32CD32}{i}hpunch{/i}{/color}."
+    e surprised "If you had it on, did you notice how robust that Screen Shake was? That wasn't the classic {color=#32CD32}{i}hpunch{/i}{/color}."
 
-    e"This time around, we added in a custom Shake function that is randomized each time, with varying levels of intensity you can choose from."
+    e -surprised "This time around, we added in a custom Shake function that is randomized each time, with varying levels of intensity you can choose from."
 
     e "You can turn the screen shaking effect off in Preferences, just in case the motion makes you or your players sick. One more time."
 
@@ -238,8 +231,11 @@ label start:
 
         "Office":
 
-            ## This empty label is solely for replay mode purposes.
+            ## If you want to prevent your players from rolling back and changing their choice
+            ## in the game for whatever reason, you can apply this line after each choice menu.
+            $ renpy.fix_rollback()
 
+            ## This empty label is solely for replay mode purposes.
             label office:
 
                 pass
@@ -255,11 +251,13 @@ label start:
                 yoffset 250
             with fade
 
-            e "Ugh, you know that saying about \"all work and no play,\" right?"
+            e "Hey, you know that saying about \"all work and no play,\" right?"
 
             "Eileen seems bothered by something."
 
         "Beach":
+
+            $ renpy.fix_rollback()
 
             label beach:
 
@@ -283,6 +281,14 @@ label start:
 
             "Eileen seems pleased with herself."
 
+            ## To unlock certain images in the Galleries, you can set a variable condition
+            $ persistent.swimsuit_unlock = True
+
+    ## The two different branches of the choice meet again in the main flow of the game.
+    ## This is sometimes known as the "common route" of your story.
+
+    show eileen neutral with dissolve
+
     "Remember to check the History screen if you have not done so yet."
 
     ## This ends the replay mode segment. Doesn't affect normal gameplay.
@@ -301,7 +307,7 @@ label credits:
     scene black with fade
 
     ## Find "End Credits Scroll" in extras.rpy to change text.
-    call screen credits(15.0)
+    call screen credits(20.0)
 
     $ persistent.credits_seen = True
 
